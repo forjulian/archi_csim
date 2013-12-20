@@ -82,7 +82,6 @@ char* hextobin(const char str[]) {
 
 char* format_binary(char *bstring, int s, int b)
 {
-	printf("%s\n", bstring);
 	char *formatted;
 	int i;
 
@@ -217,9 +216,14 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 		size = atoi(&buf[i+4]);
 
-		char* binstring = hextobin(addr);
+		char* binstring = format_binary(hextobin(addr), sets, blocks);
+		unsigned long long tag_no = get_tag(binstring);
+		unsigned long long set_no = get_set(binstring);
+		unsigned long long offset_no = get_offset(binstring);
 
 		if (oper == 'L') {
+		printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
+
 		} else if (oper == 'S') {
 		} else if (oper == 'M') {
 		} else {
