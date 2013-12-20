@@ -222,7 +222,29 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 		unsigned long long offset_no = get_offset(binstring);
 
 		if (oper == 'L') {
-		printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
+			printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
+			
+			int i, flag = 0;
+			for(i=0;i<blocks;i++) {
+				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
+					cache.hit++;
+					c_line temp = cache.sets[set_no][i];
+					
+					int j;
+					for(j=0;j<i;j++) {
+						cache.sets[set_no][j] = cache.sets[set_no][j+1];
+					}
+
+					cache.sets[set_no][0] = temp;
+					flag = 1;
+					break;
+				}
+			}
+
+			if(!flag) {
+				cache.miss++;
+
+			}
 
 		} else if (oper == 'S') {
 		} else if (oper == 'M') {
@@ -244,7 +266,14 @@ void set_cache(int setcount, int assoc, int blocks) {
 
 	int i;
 	for(i=0;i<(1<<setcount);i++) {
-		*(sets + i) = (c_line*) malloc(sizeof(c_line) * assoc); 
+		*(sets + i) = (c_line*) malloc(sizeof(c_line) * assoc);
+		
+		int j;
+		for(j=0;j<assoc;j++) {
+			(sets + i)[j] -> valid = 0;
+			(sets + i)[j] -> tag = 0;
+			(sets + i)[j] -> size = 0;
+		}
 	}
 
 	cache.sets = sets;
