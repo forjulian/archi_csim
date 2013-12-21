@@ -346,6 +346,10 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 	}
 
 	printf("hits:%d misses:%d evictions:%d\n", cache.hit, cache.miss, cache.evict);
+
+	double hit_rate = (double)cache.hit / ((double)cache.hit + (double)cache.miss);
+	double average = 1.0 + (1.0 - hit_rate) * 100.0;
+	printf("Average access time : %lf cycles\n", average);
 	fclose(fp);
 	return;
 }
