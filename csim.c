@@ -8,7 +8,7 @@
 
 typedef struct line {
 	int valid;
-	int tag;
+	unsigned long long tag;
 	int size;
 } c_line;
 
@@ -216,23 +216,30 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 		size = atoi(&buf[i+4]);
 
+		if(verbose) {
+			printf("%c %s,%d ", oper, addr, size);
+		}
+
 		char* binstring = format_binary(hextobin(addr), sets, blocks);
 		unsigned long long tag_no = get_tag(binstring);
 		unsigned long long set_no = get_set(binstring);
 		unsigned long long offset_no = get_offset(binstring);
 
-		if (oper == 'L') {
-			printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
-			
-			int i, flag = 0;
-			for(i=0;i<blocks;i++) {
+		if (oper == 'L' || oper == 'S') {
+			// printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
+
+			int i, flag;
+			flag = 0;
+			for(i=0;i<assoc;i++) {
 				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
 					cache.hit++;
+					printf("hit ");
+
 					c_line temp = cache.sets[set_no][i];
-					
+
 					int j;
 					for(j=0;j<i;j++) {
-						cache.sets[set_no][j] = cache.sets[set_no][j+1];
+						cache.sets[set_no][j+1] = cache.sets[set_no][j];
 					}
 
 					cache.sets[set_no][0] = temp;
@@ -243,16 +250,103 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 			if(!flag) {
 				cache.miss++;
+				printf("miss ");
 
+				if(cache.sets[set_no][assoc-1].valid) {
+					printf("eviction ");
+					cache.evict++;
+				}
+				int j;
+				for(j=0;i<assoc-1;j++) {
+					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				}
+				cache.sets[set_no][0].valid = 1;
+				cache.sets[set_no][0].tag = tag_no;
+				cache.sets[set_no][0].size = (1<<blocks);
 			}
 
-		} else if (oper == 'S') {
+			printf("\n");
 		} else if (oper == 'M') {
+			int i, flag;
+			flag = 0;
+			for(i=0;i<assoc;i++) {
+				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
+					cache.hit++;
+					printf("hit ");
+
+					c_line temp = cache.sets[set_no][i];
+
+					int j;
+					for(j=0;j<i;j++) {
+						cache.sets[set_no][j+1] = cache.sets[set_no][j];
+					}
+
+					cache.sets[set_no][0] = temp;
+					flag = 1;
+					break;
+				}
+			}
+
+			if(!flag) {
+				cache.miss++;
+				printf("miss ");
+
+				if(cache.sets[set_no][assoc-1].valid) {
+					printf("eviction ");
+					cache.evict++;
+				}
+				int j;
+				for(j=0;i<assoc-1;j++) {
+					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				}
+				cache.sets[set_no][0].valid = 1;
+				cache.sets[set_no][0].tag = tag_no;
+				cache.sets[set_no][0].size = (1<<blocks);
+			}
+
+			flag = 0;
+			for(i=0;i<assoc;i++) {
+				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
+					cache.hit++;
+					printf("hit ");
+
+					c_line temp = cache.sets[set_no][i];
+
+					int j;
+					for(j=0;j<i;j++) {
+						cache.sets[set_no][j+1] = cache.sets[set_no][j];
+					}
+
+					cache.sets[set_no][0] = temp;
+					flag = 1;
+					break;
+				}
+			}
+
+			if(!flag) {
+				cache.miss++;
+				printf("miss ");
+
+				if(cache.sets[set_no][assoc-1].valid) {
+					printf("eviction ");
+					cache.evict++;
+				}
+				int j;
+				for(j=0;i<assoc-1;j++) {
+					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				}
+				cache.sets[set_no][0].valid = 1;
+				cache.sets[set_no][0].tag = tag_no;
+				cache.sets[set_no][0].size = (1<<blocks);
+			}
+			
+			printf("\n");
 		} else {
 			printf("%c %s %d\n", oper, addr, size);
 		}
 	}
 
+	printf("hits:%d misses:%d evictions:%d\n", cache.hit, cache.miss, cache.evict);
 	fclose(fp);
 	return;
 }
@@ -266,13 +360,13 @@ void set_cache(int setcount, int assoc, int blocks) {
 
 	int i;
 	for(i=0;i<(1<<setcount);i++) {
-		*(sets + i) = (c_line*) malloc(sizeof(c_line) * assoc);
-		
+		sets[i] = (c_line*) malloc(sizeof(c_line) * assoc);
+
 		int j;
 		for(j=0;j<assoc;j++) {
-			(sets + i)[j] -> valid = 0;
-			(sets + i)[j] -> tag = 0;
-			(sets + i)[j] -> size = 0;
+			sets[i][j].valid = 0;
+			sets[i][j].tag = 0;
+			sets[i][j].size = 0;
 		}
 	}
 
