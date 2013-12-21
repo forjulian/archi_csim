@@ -217,7 +217,7 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 		size = atoi(&buf[i+4]);
 
 		if(verbose) {
-			printf("%c %s,%d ", oper, addr, size);
+			printf("%c %s,%d", oper, addr, size);
 		}
 
 		char* binstring = format_binary(hextobin(addr), sets, blocks);
@@ -226,20 +226,19 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 		unsigned long long offset_no = get_offset(binstring);
 
 		if (oper == 'L' || oper == 'S') {
-			// printf("%llu %llu %llu\n", tag_no, set_no, offset_no);
 
 			int i, flag;
-			flag = 0;
+			flag = 0;	// flag for determining cache hit
 			for(i=0;i<assoc;i++) {
 				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
 					cache.hit++;
-					printf("hit ");
+					if(verbose) printf(" hit");
 
 					c_line temp = cache.sets[set_no][i];
 
 					int j;
-					for(j=0;j<i;j++) {
-						cache.sets[set_no][j+1] = cache.sets[set_no][j];
+					for(j=i;j>0;j--) {
+						cache.sets[set_no][j] = cache.sets[set_no][j-1];
 					}
 
 					cache.sets[set_no][0] = temp;
@@ -250,35 +249,35 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 			if(!flag) {
 				cache.miss++;
-				printf("miss ");
+				if(verbose) printf(" miss");
 
 				if(cache.sets[set_no][assoc-1].valid) {
-					printf("eviction ");
+					if(verbose) printf(" eviction");
 					cache.evict++;
 				}
 				int j;
-				for(j=0;i<assoc-1;j++) {
-					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				for(j=assoc-1;j>0;j--) {
+					cache.sets[set_no][j] = cache.sets[set_no][j-1];
 				}
 				cache.sets[set_no][0].valid = 1;
 				cache.sets[set_no][0].tag = tag_no;
 				cache.sets[set_no][0].size = (1<<blocks);
 			}
 
-			printf("\n");
+			if(verbose) printf("\n");
 		} else if (oper == 'M') {
 			int i, flag;
 			flag = 0;
 			for(i=0;i<assoc;i++) {
 				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
 					cache.hit++;
-					printf("hit ");
+					if(verbose) printf(" hit");
 
 					c_line temp = cache.sets[set_no][i];
 
 					int j;
-					for(j=0;j<i;j++) {
-						cache.sets[set_no][j+1] = cache.sets[set_no][j];
+					for(j=i;j>0;j--) {
+						cache.sets[set_no][j] = cache.sets[set_no][j-1];
 					}
 
 					cache.sets[set_no][0] = temp;
@@ -289,15 +288,15 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 			if(!flag) {
 				cache.miss++;
-				printf("miss ");
+				if(verbose) printf(" miss");
 
 				if(cache.sets[set_no][assoc-1].valid) {
-					printf("eviction ");
+					if(verbose) printf(" eviction");
 					cache.evict++;
 				}
 				int j;
-				for(j=0;i<assoc-1;j++) {
-					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				for(j=assoc-1;j>0;j--) {
+					cache.sets[set_no][j] = cache.sets[set_no][j-1];
 				}
 				cache.sets[set_no][0].valid = 1;
 				cache.sets[set_no][0].tag = tag_no;
@@ -308,13 +307,13 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 			for(i=0;i<assoc;i++) {
 				if(cache.sets[set_no][i].valid && cache.sets[set_no][i].tag == tag_no) {
 					cache.hit++;
-					printf("hit ");
+					if(verbose) printf(" hit");
 
 					c_line temp = cache.sets[set_no][i];
 
 					int j;
-					for(j=0;j<i;j++) {
-						cache.sets[set_no][j+1] = cache.sets[set_no][j];
+					for(j=i;j>0;j--) {
+						cache.sets[set_no][j] = cache.sets[set_no][j-1];
 					}
 
 					cache.sets[set_no][0] = temp;
@@ -325,22 +324,22 @@ void run_cache(int sets, int assoc, int blocks, char* trace, int verbose) {
 
 			if(!flag) {
 				cache.miss++;
-				printf("miss ");
+				if(verbose) printf(" miss");
 
 				if(cache.sets[set_no][assoc-1].valid) {
-					printf("eviction ");
+					if(verbose) printf(" eviction");
 					cache.evict++;
 				}
 				int j;
-				for(j=0;i<assoc-1;j++) {
-					cache.sets[set_no][j+1] = cache.sets[set_no][j];
+				for(j=assoc-1;j>0;j--) {
+					cache.sets[set_no][j] = cache.sets[set_no][j-1];
 				}
 				cache.sets[set_no][0].valid = 1;
 				cache.sets[set_no][0].tag = tag_no;
 				cache.sets[set_no][0].size = (1<<blocks);
 			}
-			
-			printf("\n");
+
+			if(verbose) printf("\n");
 		} else {
 			printf("%c %s %d\n", oper, addr, size);
 		}
